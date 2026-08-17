@@ -1,0 +1,326 @@
+v<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"], input[type="datetime-local"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus, input[type="datetime-local"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-buttons button {
+            flex: 1;
+            padding: 10px;
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+        
+        .filter-buttons button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .todo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .todo-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        
+        .todo-item.completed {
+            opacity: 0.6;
+            border-left-color: #4caf50;
+        }
+        
+        .todo-item.completed .todo-title {
+            text-decoration: line-through;
+            color: #999;
+        }
+        
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .todo-content {
+            flex: 1;
+        }
+        
+        .todo-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .todo-description {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .todo-date {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        .delete-btn {
+            background: #ff6b6b;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+        
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 My Todo App</h1>
+        
+        <div class="input-group">
+            <input type="text" id="todoTitle" placeholder="What needs to be done?">
+            <input type="datetime-local" id="dueDate">
+            <button onclick="addTodo()">Add</button>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Search todos..." 
+                   onkeyup="searchTodos()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
+        </div>
+        
+        <div class="filter-buttons">
+            <button class="active" onclick="filterTodos('all')">All</button>
+            <button onclick="filterTodos('pending')">Pending</button>
+            <button onclick="filterTodos('completed')">Completed</button>
+        </div>
+        
+        <div class="todo-list" id="todoList">
+            <div class="empty-message">No todos yet. Add one to get started!</div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8080/api/todos';
+        let allTodos = [];
+        let currentFilter = 'all';
+        
+        // Load todos on page load
+        window.addEventListener('load', loadTodos);
+        
+        async function loadTodos() {
+            try {
+                const response = await fetch(`${API_URL}`);
+                allTodos = await response.json();
+                renderTodos(allTodos);
+            } catch (error) {
+                console.error('Error loading todos:', error);
+            }
+        }
+        
+        async function addTodo() {
+            const title = document.getElementById('todoTitle').value.trim();
+            const dueDate = document.getElementById('dueDate').value;
+            
+            if (!title) {
+                alert('Please enter a todo title');
+                return;
+            }
+            
+            const todo = {
+                title: title,
+                description: '',
+                dueDate: dueDate || null,
+                isCompleted: false
+            };
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(todo)
+                });
+                
+                if (response.ok) {
+                    document.getElementById('todoTitle').value = '';
+                    document.getElementById('dueDate').value = '';
+                    loadTodos();
+                }
+            } catch (error) {
+                console.error('Error adding todo:', error);
+            }
+        }
+        
+        async function deleteTodo(id) {
+            if (!confirm('Delete this todo?')) return;
+            
+            try {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                loadTodos();
+            } catch (error) {
+                console.error('Error deleting todo:', error);
+            }
+        }
+        
+        async function toggleTodo(id, isCompleted) {
+            try {
+                const endpoint = isCompleted ? `${API_URL}/${id}/complete` : `${API_URL}/${id}`;
+                const method = isCompleted ? 'PUT' : 'PUT';
+                
+                await fetch(endpoint, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ isCompleted: !isCompleted })
+                });
+                
+                loadTodos();
+            } catch (error) {
+                console.error('Error toggling todo:', error);
+            }
+        }
+        
+        function filterTodos(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            let filtered = allTodos;
+            if (filter === 'pending') {
+                filtered = allTodos.filter(t => !t.isCompleted);
+            } else if (filter === 'completed') {
+                filtered = allTodos.filter(t => t.isCompleted);
+            }
+            renderTodos(filtered);
+        }
+        
+        function searchTodos() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allTodos.filter(t => 
+                t.title.toLowerCase().includes(query)
+            );
+            renderTodos(filtered);
+        }
+        
+        function renderTodos(todos) {
+            const todoList = document.getElementById('todoList');
+            
+            if (todos.length === 0) {
+                todoList.innerHTML = '<div class="empty-message">No todos to show</div>';
+                return;
+            }
+            
+            todoList.innerHTML = todos.map(todo => `
+                <div class="todo-item ${todo.isCompleted ? 'completed' : ''}">
+                    <input type="checkbox" class="todo-checkbox" 
+                           ${todo.isCompleted ? 'checked' : ''} 
+                           onchange="toggleTodo(${todo.id}, ${todo.isCompleted})">
+                    <div class="todo-content">
+                        <div class="todo-title">${escapeHtml(todo.title)}</div>
+                        ${todo.dueDate ? `<div class="todo-date">📅 ${new Date(todo.dueDate).toLocaleString()}</div>` : ''}
+                    </div>
+                    <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
+                </div>
+            `).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+

@@ -1,4 +1,4 @@
-# 📝 Todo Application
+<img width="1878" height="843" alt="Screenshot_1" src="https://github.com/user-attachments/assets/7c783aff-c43d-4224-84a0-8e0f955b0a09" /># 📝 Todo Application
 
 A full-stack todo management application built with **Spring Boot 4.1.0**, **MySQL 8.0**, and **React.js**. Production-ready with clean 3-layer architecture.
 
@@ -15,16 +15,15 @@ A full-stack todo management application built with **Spring Boot 4.1.0**, **MyS
 ## 📸 Screenshots
 
 ### Home Page - Add & View Todos
-![Todo App Home](screenshots/1-home.png)
-
+![Todo App Home]
 ### View All Todos
-![All Todos](screenshots/2-with-todos.png)
+![All Todos]
 
 ### Mark Todos as Complete
-![Completed Todos](screenshots/3-completed.png)
+![Completed Todos]
 
 ### Search & Filter Features
-![Search & Filter](screenshots/4-search.png)
+![Search & Filter]
 
 ## 🛠️ Tech Stack
 
